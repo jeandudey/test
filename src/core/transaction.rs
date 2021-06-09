@@ -7,7 +7,7 @@ use crate::core::{Amount, ClientId};
 /// Transaction ID.
 pub type TransactionId = u16;
 
-/// RawTransaction types.
+/// Transaction types.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TransactionType {
     /// Deposit.

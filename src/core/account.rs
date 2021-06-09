@@ -8,9 +8,6 @@ use crate::core::Amount;
 pub type ClientId = u16;
 
 /// The account containing the finances of each client.
-///
-/// Final state of each client that is written to the output
-/// CSV file.
 #[derive(Debug, Clone)]
 pub struct Account {
     pub available: Amount,
@@ -70,7 +67,7 @@ impl Account {
     }
 }
 
-/// A raw account (e.g.: that's serialized)
+/// A raw account (e.g.: that's serialized and written to the CSV)
 #[derive(Debug, Serialize)]
 pub struct RawAccount {
     #[serde(serialize_with = "crate::core::serialize_amount")]
