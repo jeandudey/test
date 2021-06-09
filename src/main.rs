@@ -1,7 +1,6 @@
-/// Welcome to the test.
-
-use std::{env, fs::File};
 use anyhow::Result;
+/// Welcome to the test.
+use std::{env, fs::File};
 
 pub mod core;
 
@@ -13,10 +12,10 @@ async fn main() -> Result<()> {
     let mut args = env::args_os();
     args.next();
 
-    let transactions_filename = args.next()
+    let transactions_filename = args
+        .next()
         .ok_or(anyhow::anyhow!("File name not provided"))?;
-    let mut reader = File::open(transactions_filename)
-        .map(csv::Reader::from_reader)?;
+    let mut reader = File::open(transactions_filename).map(csv::Reader::from_reader)?;
 
     // Send our transactions to the transaction processor. Made this way
     // So we can send more transactions from other tasks if necessary.

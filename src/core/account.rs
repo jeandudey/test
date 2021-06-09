@@ -27,6 +27,47 @@ impl Account {
             locked: false,
         }
     }
+
+    /// Deposit money into account.
+    pub fn deposit(&mut self, amount: Amount) {
+        self.available += amount;
+    }
+
+    /// Withdraw money from account.
+    pub fn withdraw(&mut self, amount: Amount) {
+        // Withdraw only if the amount is available
+        if amount > self.available {
+            return;
+        }
+
+        self.available -= amount;
+    }
+
+    /// Hold an amount of money from the acocunt.
+    pub fn hold(&mut self, amount: Amount) {
+        if amount > self.available {
+            return;
+        }
+
+        self.available -= amount;
+        self.held += amount;
+    }
+
+    /// Release an amount of held money from the account.
+    pub fn release(&mut self, amount: Amount) {
+        if amount > self.held {
+            return;
+        }
+
+        self.available += amount;
+        self.held -= amount;
+    }
+
+    /// Take an amount of money held from the account and lock it.
+    pub fn chargeback(&mut self, amount: Amount) {
+        self.held -= amount;
+        self.locked = true;
+    }
 }
 
 /// A raw account (e.g.: that's serialized)

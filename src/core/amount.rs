@@ -10,7 +10,7 @@ pub type Amount = fixed::types::I64F64;
 /// Custom deserializer function for an [`Amount`]
 pub fn deserialize_amount<'de, D>(deserializer: D) -> Result<Amount, D::Error>
 where
-    D: serde::Deserializer<'de>
+    D: serde::Deserializer<'de>,
 {
     use serde::de;
 

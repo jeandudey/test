@@ -25,7 +25,7 @@ pub enum TransactionType {
 impl<'de> Deserialize<'de> for TransactionType {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
-        D: serde::Deserializer<'de>
+        D: serde::Deserializer<'de>,
     {
         use serde::de;
 

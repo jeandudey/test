@@ -2,21 +2,19 @@
 
 use std::collections::HashMap;
 
-use tokio::{
-    sync::{
-        mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender},
-        oneshot::{channel as oneshot_channel, Sender as OneshotSender, error::TryRecvError},
-    },
+use tokio::sync::{
+    mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender},
+    oneshot::{channel as oneshot_channel, error::TryRecvError, Sender as OneshotSender},
 };
 
-use anyhow::{Result, Context};
+use anyhow::{Context, Result};
 
 mod account;
 mod amount;
 mod transaction;
 
 pub use account::{Account, Accounts, ClientId, RawAccount};
-pub use amount::{Amount, deserialize_amount, serialize_amount};
+pub use amount::{deserialize_amount, serialize_amount, Amount};
 pub use transaction::{RawTransaction, Transaction, TransactionId, TransactionType};
 
 #[derive(Debug)]
@@ -36,23 +34,22 @@ impl Task {
     pub fn new() -> Task {
         let (sender, receiver) = unbounded_channel::<Action>();
         // Spawn our transaction processor.
-        tokio::task::spawn(async move {
-            task(receiver).await
-        });
+        tokio::task::spawn(async move { task(receiver).await });
 
-        Task {
-            sender,
-        }
+        Task { sender }
     }
 
     pub fn send_tx(&self, tx: RawTransaction) -> Result<()> {
-        Ok(self.sender.send(Action::RawTx(tx))
+        Ok(self
+            .sender
+            .send(Action::RawTx(tx))
             .context("Transaction processor task stopped")?)
     }
 
     pub fn close(self) -> Result<Accounts> {
         let (results_tx, mut results_rx) = oneshot_channel::<Accounts>();
-        self.sender.send(Action::Close(results_tx))
+        self.sender
+            .send(Action::Close(results_tx))
             .context("Transaction processor task stopped")?;
 
         loop {
@@ -61,12 +58,11 @@ impl Task {
                 Err(_) => anyhow::bail!("Could not retrieve acocunts information"),
                 Ok(accounts) => return Ok(accounts),
             }
-        };
+        }
     }
 }
 
-async fn task(mut actions: UnboundedReceiver<Action>)
-{
+async fn task(mut actions: UnboundedReceiver<Action>) {
     let mut accounts = Accounts::new();
     let mut transactions = HashMap::<TransactionId, Transaction>::new();
 
@@ -92,24 +88,12 @@ async fn task(mut actions: UnboundedReceiver<Action>)
                 }
 
                 match tx.raw.tx_type {
-                    TransactionType::Deposit => {
-                        account.available += tx.raw.amount;
-                    }
-                    TransactionType::Withdrawal => {
-                        // Withdraw only if the amount is available
-                        if tx.raw.amount > account.available {
-                            continue;
-                        }
-
-                        account.available -= tx.raw.amount;
-                    }
+                    TransactionType::Deposit => account.deposit(tx.raw.amount),
+                    TransactionType::Withdrawal => account.withdraw(tx.raw.amount),
                     TransactionType::Dispute => {
                         // Find our disputed TX.
                         if let Some(disputed_tx) = transactions.get_mut(&tx.raw.id) {
-                            // Hold the client money for a moment while we
-                            // resolve the dispute.
-                            account.available -= disputed_tx.raw.amount;
-                            account.held += disputed_tx.raw.amount;
+                            account.hold(disputed_tx.raw.amount);
                             disputed_tx.disputed = true;
                         }
                     }
@@ -120,8 +104,7 @@ async fn task(mut actions: UnboundedReceiver<Action>)
                                 continue;
                             }
 
-                            account.available += disputed_tx.raw.amount;
-                            account.held -= disputed_tx.raw.amount;
+                            account.release(disputed_tx.raw.amount);
                             disputed_tx.disputed = false;
                         }
                     }
@@ -132,8 +115,7 @@ async fn task(mut actions: UnboundedReceiver<Action>)
                                 continue;
                             }
 
-                            account.held -= disputed_tx.raw.amount;
-                            account.locked = true;
+                            account.chargeback(disputed_tx.raw.amount);
                         }
                     }
                 }
@@ -142,6 +124,6 @@ async fn task(mut actions: UnboundedReceiver<Action>)
                 tx.send(accounts).ok();
                 break;
             }
-       }
+        }
     }
 }
