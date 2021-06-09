@@ -1,0 +1,19 @@
+[package]
+name = "test"
+version = "1.0.0"
+authors = ["Jean-Pierre De Jesus DIAZ <me@jeandudey.tech>"]
+edition = "2018"
+
+[dependencies]
+# Handling of quantities.
+fixed = { version = "1", features = ["serde"] }
+
+# Async
+tokio = { version = "1", features = ["rt", "sync", "macros", "rt-multi-thread"] }
+
+# Errors
+anyhow = "1"
+
+# Serialization/Deserialization
+csv = "1"
+serde = { version = "1", features = ["derive"] }
