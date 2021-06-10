@@ -69,12 +69,12 @@ impl Task {
 /// Transaction processing task.
 ///
 /// Here the transactions are received through an unbounded receiver
-/// which can be changed later or be made into a configuration to
-/// convert it to a bounded receiver where we know approx. how much
-/// data we will have to sent to the thread. However for demonstration
+/// which can be changed later (or be made into a configuration, the size of
+/// bounded receiver) to convert it to a bounded receiver where we know approx.
+/// how much data we will have to send to the thread. However for demonstration
 /// purposes an unbounded one works just fine.
 async fn task(mut actions: UnboundedReceiver<Action>) {
-    // Keeo track of accounts and transactions. Accounts are created on deposits.
+    // Keep track of accounts and transactions. Accounts are created on deposits.
     // Only deposit transactions are stored for now as they are only used here
     // For the transaction types related to the dispues.
     //
@@ -84,7 +84,7 @@ async fn task(mut actions: UnboundedReceiver<Action>) {
     // return the accounts information to be printed.
     //
     // A hash map is used to reduce the lookup time of old transactions and the same
-    // is done with accounts.
+    // is done with accounts, this is done by using the TX ID or client ID as the key.
     let mut accounts = Accounts::new();
     let mut transactions = HashMap::<TransactionId, Transaction>::new();
 
