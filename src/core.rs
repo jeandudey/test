@@ -94,12 +94,15 @@ async fn task(mut actions: UnboundedReceiver<Action>) {
     while let Some(action) = actions.recv().await {
         match action {
             Action::RawTx(raw_tx) => {
-                // For other transactions you need an account. To avoid transactions from
+                // For other transactions you need an account. We create an account on a deposit.
                 if raw_tx.tx_type != TransactionType::Deposit && !accounts.exists(raw_tx.client) {
                     continue;
                 }
 
+                // Get the account or create it if it doesn't exists.
                 let account = accounts.get_or_create(raw_tx.client);
+                // Convert this transaction from a raw transaction (parsed from the CSV file),
+                // to a transaction we can modify, contains it's state, etc.
                 let tx: Transaction = raw_tx.into();
 
                 if tx.raw.tx_type == TransactionType::Deposit {

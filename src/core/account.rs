@@ -10,6 +10,7 @@ pub type ClientId = u16;
 /// The account containing the finances of each client.
 #[derive(Debug, Clone)]
 pub struct Account {
+    pub client: ClientId,
     pub available: Amount,
     pub held: Amount,
     pub locked: bool,
@@ -17,8 +18,13 @@ pub struct Account {
 
 impl Account {
     /// Create a new [``Account`]
-    pub fn new() -> Account {
+    ///
+    /// # Parameters
+    ///
+    /// - `client`: the ID for this client.
+    pub fn new(client: ClientId) -> Account {
         Account {
+            client,
             available: Amount::ZERO,
             held: Amount::ZERO,
             locked: false,
@@ -70,6 +76,7 @@ impl Account {
 /// A raw account (e.g.: that's serialized and written to the CSV)
 #[derive(Debug, Serialize)]
 pub struct RawAccount {
+    pub client: ClientId,
     #[serde(serialize_with = "crate::core::serialize_amount")]
     pub available: Amount,
     #[serde(serialize_with = "crate::core::serialize_amount")]
@@ -82,6 +89,7 @@ pub struct RawAccount {
 impl From<Account> for RawAccount {
     fn from(a: Account) -> Self {
         RawAccount {
+            client: a.client,
             available: a.available,
             held: a.held,
             total: a.available + a.held,
@@ -105,9 +113,9 @@ impl Accounts {
     }
 
     /// Get an existent account or create it.
-    pub fn get_or_create(&mut self, id: ClientId) -> &mut Account {
-        self.data.entry(id).or_insert(Account::new());
-        self.data.get_mut(&id).unwrap()
+    pub fn get_or_create(&mut self, client: ClientId) -> &mut Account {
+        self.data.entry(client).or_insert(Account::new(client));
+        self.data.get_mut(&client).unwrap()
     }
 
     /// Check if an account exists.
